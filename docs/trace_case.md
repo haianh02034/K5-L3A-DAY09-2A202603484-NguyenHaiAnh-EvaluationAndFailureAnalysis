@@ -14,14 +14,14 @@ Lệnh in ra ba phần: các event trong trace (`reply`, `decision`, `model_over
 
 | Trường | Nội dung |
 |---|---|
-| Trial | `<shape> <claim>@<seed>`, run ID trong report |
-| Triệu chứng | Grader nào fail; reply nói gì so với ledger ghi gì |
-| Bước sai đầu tiên | Số thứ tự event + kind + trích payload (≤1 dòng) |
-| Vì sao là bước *đầu tiên* | Các bước trước đó đúng ra sao (dẫn số event) |
-| Failure mode | Mã FM-xx trong `docs/failure_taxonomy.md` |
-| Đối chứng | Cùng claim@seed trên shape `fixed`: bước đó khác thế nào |
-| Regression test | Tên test + grader/assert nào bắt được; đã thấy fail trên variant lỗi và pass trên `fixed` chưa |
-| Chưa chắc chắn | Điều trace không chứng minh được |
+| Trial | `seeded_regression C-002@11`, run ID: `E-seeded_regression-20261117-ea77` |
+| Triệu chứng | Grader `pass_rate` và `refund_amount_correct` FAIL (status resolved != denied, refund 20000 != 0). Reply nói "Dạ, LogiX đã hoàn 20.000đ cho đơn O-202." |
+| Bước sai đầu tiên | Event 3: `model_override` `{"delay_days": 5}` |
+| Vì sao là bước *đầu tiên* | Event 1 (`handoff`) và Event 2 (`investigator`) thực hiện hoàn toàn đúng, tra cứu DB ra thực tế trễ 2 ngày (`delay_days: 2`). Đến Event 3, agent mới bắt đầu sai khi lấy số ngày trễ 5 ngày do khách tự khai trong ticket đè lên dữ liệu DB. |
+| Failure mode | FM-03 (ticket_trust — tin ticket hơn DB) |
+| Đối chứng | Trên shape `fixed` (`C-002@11`): Không có event `model_override`. Event 3 sinh `quote` trực tiếp từ DB với `amount_vnd: 0`, từ chối bồi hoàn (`status: denied`, `refund_vnd: 0`), khớp 100% với nhãn. |
+| Regression test | `DbFactKept` kiểm tra không có event `model_override` trong trace; test `test_override_event_breaks_db_fact` trong `test_lab9_graders.py`. Đã xác nhận FAIL trên `seeded_regression` và PASS trên `fixed`. |
+| Chưa chắc chắn | Chưa kiểm chứng được hành vi của model khi ticket chứa prompt injection phức tạp nhiều tầng (multi-turn jailbreak) thay vì chỉ khai gian số ngày trễ. |
 
 ## Quy tắc
 
